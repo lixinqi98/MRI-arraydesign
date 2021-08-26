@@ -7,7 +7,7 @@ Record the project based on the timeline.
    + UNIC 68: original code `BiotSavart_MultiCoil_JH_2_5_2_1.m`.
    + UNIC 53: based on `BiotSavart_MultiCoil_JH_2_5_2_1.m`, remove the loops marked as black.
    + UNIC 99: `MonaBiotSavart_MultiCoil_JH_2_5_2_1.m`
-   + more coils(add small loops inside the big loops, not used): `Mona_v2_BiotSavart_MultiCoil_JH_2_5_2_1.m`
+   + 150 coils(add small loops inside the big loops, not used): `Mona_v2_BiotSavart_MultiCoil_JH_2_5_2_1.m`
 
 2. Create the **SH7** based on the formula and get the 7T original field maps from @Chris.
 
@@ -17,7 +17,7 @@ Record the project based on the timeline.
 
    + use the same brain&coil position as @Carissa, `offsety = -0.01; offsetz = 0.02`
    + UNIC: `MainWholeBrainShimming_UNIC_3T.m`
-   + SH:`MainWholeBrainShimming_SHorder_3T.m`
+   + SH: `MainWholeBrainShimming_SHorder_3T.m`
 
 4. Apply the multi-edge cutting to the brains and compare them with results in 3. Use the field map with multi-edge cutting in all following calculation.
 
@@ -26,13 +26,15 @@ Record the project based on the timeline.
 5. Calculate the **7T** whole brain shimming results of SH2-7, iPRES 32, UNIC 51, UNIC 68, and UNIC 99. 
 
    + **The most important difference between 3T and 7T is that in 3T we have to scale down 2pi and in 7T no need to do this.** (How we find this? After checking the detailed field map of each figure and each slice, found that the average std of each slice is strange and different from the common one.) 
-   + The loops' current limit should be differnet in 3T and 7T. (add a detail table here)
+   + The loops' current limit should be differnet in 3T and 7T. 
    + **7T field maps have different original sizes and they have to be aligned to the same size**. We find the largest x,y,z of all brains and add `nan` padding to each brain. 
    + UNIC: `MainWholeBrainShimming_UNIC_7T.m`
      + **Use the correct brain position** The relative position of brain and coils has a great influence on the shimming results. We tested 4 different settings as shown in excel and finally used `offsety = -0.020; offsetz = 0.03;`
    + SH: `MainWholeBrainShimming_SHorder_7T.m `
 
-6. After making sure the correction of 3T&7T whole brain shimming, we do the **slab shimming**. Each slab consists of 5 slices and each slab's shimming effect is calculated independently.( add a table of slab details)
+6. After making sure the correction of 3T&7T whole brain shimming, we do the **slab shimming**. Each slab consists of 5 slices and each slab's shimming effect is calculated independently.
+
+   + To view a clearer slab field maps, apply the extra gray scale.
 
    + UNIC: `MainSlabShimming_UNIC_3T.m`, `MainSlabShimming_UNIC_7T.m`
    + SH: `MainSlabShimming_SHorder_3T.m`, `MainSlabShimming_SHorder_7T.m`
@@ -41,12 +43,42 @@ Record the project based on the timeline.
 
    + Integrated in the `Main*` codes, usually in `STEP 5`
 
-8. In first version of coil reduction, coils' weights are calculated based on whole brain shimming, so we can not guarantee the effect of slab shimming. In the next version, the slab shimming effect was taken into consideration. Each loop's weight was calculated based on the ensemble of whole brain and slab shimming. Like here:
+8. In first version of coil reduction, coils' weights are calculated based on whole brain shimming, so we can not guarantee the effect of slab shimming. In the next version, the slab shimming effect was taken into consideration. **Each loop's weight was calculated based on the ensemble of whole brain and slab shimming**. Like here:
 
    ```
    coil weight = 0.5 * `wholegrain_weight` + 0.5 * (`slab1_weight`* 1/6 + `slab2_weight`* 1/6 + `slab3_weight`* 1/6 + `slab4_weight`* 1/6+ `slab5_weight`* 1/6 + `slab6_weight`* 1/6)
    ```
 
-   , which can be modified in `ChooseCoil_WorldCordf_v2.m` 
+, which can be modified in `ChooseCoil_WorldCordf_v2.m` 
 
 9. The coil reduction is based on the dataset of 16 brains and to test the robust of our reseved coil design, we have to test the whole brain and slab shimming effects on the test set. 8 extra brains are randomly picked from the HCP dataset. In conclusion, for 3T&7T, we use **16 subjects train set and 8 subjects test set**.
+
+## Supplyment
+
+#### Table 1 DC limits
+
+| DC limits/A    | SH3-7 | UNIC 32 | UNIC 51 | UNIC 68 | UNIC 99 |
+| -------------- | :---: | :-----: | :-----: | :-----: | :-----: |
+| 3T whole brain |  10   |   10    |   10    |   10    |   10    |
+| 3T slab        |  10   |    5    |   15    |   15    |   15    |
+| 7T whole brain |  20   |    5    |   30    |   30    |   30    |
+| 7T slab        |  20   |    5    |   30    |   30    |   30    |
+
+#### Table 2 Slab details
+
+| Slab-slice | Slab1 | Slab2 | Slab3 | Slab4 | Slab5 | Slab6 |
+| :--------- | :---: | :---: | :---: | :---: | :---: | :---: |
+| 3T         | 16-20 | 21-25 | 26-30 | 31-35 | 36-40 | 41-45 |
+| 7T         | 52-56 | 57-61 | 62-66 | 67-71 | 72-76 | 77-82 |
+
+
+
+#### Table 3  Coil Reduction Version
+
+| Weight                 | UNIC 51 to 32 | UNIC68 to 32 | UNIC 99 to 32 | 150 to 32 |
+| ---------------------- | :-----------: | :----------: | :-----------: | :-------: |
+| v1(whole=1)            |     Done      |     Done     |     Done      |   Done    |
+| v2(whole=1/2 slab=1/2) |     Done      |     Done     |     Done      |           |
+| V3(whole=2/3 slab=1/3) |     Done      |     Done     |     Done      |           |
+| V4(whole=3/4 slab=1/4) |     Done      |     Done     |     Done      |           |
+| V5(whole=4/5 slab=1/5) |     Done      |     Done     |     Done      |           |
